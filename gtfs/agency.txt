@@ -1,0 +1,2 @@
+agency_phone,agency_fare_url,agency_url,agency_id,agency_name,agency_timezone,agency_lang
+905-527-4441,,http://www.hamilton.ca/hsr,HSR,Hamilton Street Railway,America/Toronto,en

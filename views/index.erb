@@ -1,0 +1,98 @@
+<html>
+<head>
+     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+     <style>
+     body, html {
+        height: 100%;
+        min-height: 100%;
+     }
+     body, html, div {
+        padding: 0;
+        margin: 0;
+     }
+     #map { height: 100%; }
+     </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script>
+    $(document).ready(function() {
+        var map = L.map('map').setView([43.2518089, -79.9134231], 11),
+            busLocations = [];
+
+        L.tileLayer('http://{s}.tiles.mapbox.com/v3/<%= @mapboxId %>/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18
+        }).addTo(map);
+
+        map.locate({setView: true, maxZoom: 16});
+
+        var updateBusLocations = function updateBusLocations() {
+            $.ajax( {
+                url: '/buses',
+                success: function( buses ) {
+
+                    // Set updated to false for all of them.
+                    for (var j = 0; j < busLocations.length; j++) {
+                        busLocations[ j ].updated = false;
+                    };
+
+                    for (var i = 0; i < buses.length; i++) {
+                        var bus         = buses[i],
+                            existingBus = null;
+
+                        for (var j = 0; j < busLocations.length; j++) {
+                            if ( bus.bus_number == busLocations[j].number ) {
+                                existingBus = busLocations[ j ];
+                                break;
+                            }
+                        };
+
+                        if ( existingBus == null ) {
+                            var circle = L.circle([bus.lat, bus.lng], 10, {
+                                color: '#' + bus.color,
+                                fillColor: '#' + bus.color,
+                                fillOpacity: 1
+                            }).addTo(map);
+
+                            circle.bindPopup( '<strong>Bus Number:</strong> ' + bus.bus_number + 
+                                '<br/><strong>Route:</strong> ' + bus.route_name +
+                                '<br/><strong>Speed:</strong> ' + bus.speed + ' km/h'
+                            );
+
+                            busLocations.push( {
+                                updated: true,
+                                number : bus.bus_number,
+                                marker : circle
+                            });
+                        }
+                        else {
+                            var newLocation = L.latLng( bus.lat, bus.lng );
+                            existingBus.marker.setLatLng( newLocation );
+                            existingBus.updated = true;
+                        }
+                    };
+
+
+                    // Remove non-updated buses.
+                    for (var j = 0; j < busLocations.length; j++) {
+                        if ( !busLocations[ j ].updated ) {
+                            map.removeLayer( busLocations[ j ].marker );
+                            busLocations.splice( j, 1 );
+                            j--;
+                        }
+                    };
+                }
+            });
+        };
+
+        updateBusLocations();
+        setInterval( updateBusLocations, 5000 );
+    });
+    </script>
+</body>
+</html>
