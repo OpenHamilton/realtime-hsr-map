@@ -86,12 +86,13 @@
                             j--;
                         }
                     };
+
+                    setTimeout( updateBusLocations, 5000 );
                 }
             });
         };
 
         updateBusLocations();
-        setInterval( updateBusLocations, 5000 );
     });
     </script>
 </body>
