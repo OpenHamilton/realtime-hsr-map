@@ -1,0 +1,33 @@
+body, html {
+    height: 100%;
+    min-height: 100%;
+ }
+ body, html, div {
+    padding: 0;
+    margin: 0;
+ }
+ #map { height: 100%; }
+
+ #scale {
+ 	position: absolute;
+ 	bottom: 20px;
+ 	left: 20px;
+ 	height: 20px;
+ 	width: 200px;
+ }
+
+ #legend {
+ 	position: absolute;
+ 	bottom: 41px;
+ 	left: 20px;
+ 	width: 200px;
+ }
+
+ #legend .early {
+ 	position: relative;
+ 	float: left;
+ }
+ #legend .late {
+ 	position: relative;
+ 	float: right;
+ }

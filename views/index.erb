@@ -1,24 +1,15 @@
 <html>
 <head>
      <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+     <link rel="stylesheet" href="/app.css" />
      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-     <style>
-     body, html {
-        height: 100%;
-        min-height: 100%;
-     }
-     body, html, div {
-        padding: 0;
-        margin: 0;
-     }
-     #map { height: 100%; }
-     </style>
 </head>
 <body>
     <div id="map"></div>
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="//cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="/Arrow.js"></script>
     <script>
     $(document).ready(function() {
         var map = L.map('map').setView([43.2518089, -79.9134231], 11),
@@ -53,21 +44,24 @@
                         };
 
                         if ( existingBus == null ) {
-                            var circle = L.circle([bus.lat, bus.lng], 10, {
-                                color: '#' + bus.color,
-                                fillColor: '#' + bus.color,
-                                fillOpacity: 1
-                            }).addTo(map);
+                            var arrow = L.arrow([bus.lat, bus.lng], 20, {
+                                color:       '#' + bus.color,
+                                opacity:     1.0,
+                                fillColor:   '#' + bus.color,
+                                fillOpacity: 1.0,
+                                weight:      1
+                            }).setDirection( bus.bearing, 90 ).addTo( map );
 
-                            circle.bindPopup( '<strong>Bus Number:</strong> ' + bus.bus_number + 
+                            arrow.bindPopup( '<strong>Bus Number:</strong> ' + bus.bus_number + 
                                 '<br/><strong>Route:</strong> ' + bus.route_name +
-                                '<br/><strong>Speed:</strong> ' + bus.speed + ' km/h'
+                                '<br/><strong>Speed:</strong> ' + bus.speed + ' km/h' +
+                                '<br/><strong>Delay:</strong> ' + bus.delay + ' minutes'
                             );
 
                             busLocations.push( {
                                 updated: true,
                                 number : bus.bus_number,
-                                marker : circle
+                                marker : arrow
                             });
                         }
                         else {
@@ -86,13 +80,49 @@
                             j--;
                         }
                     };
+
+                    setTimeout( updateBusLocations, 5000 );
                 }
             });
         };
 
         updateBusLocations();
-        setInterval( updateBusLocations, 5000 );
+
+        var width = $('#scale').width() / 64;
+        var left = 0;
+        // Start with blue: #00F
+        // And turn up the green:
+        for (var i = 0; i < 16; i++) {
+            var c = '#0' + i.toString( 16 ) + 'F';
+            $('#scale').append('<div style="position: absolute; bottom: 20px; height: 20px; width: ' + width + 'px; left: ' + left + 'px; background-color: ' + c + '">');
+            left += width;
+        };
+        // Now turn down the blue:
+        for (var i = 15; i >= 0; i--) {
+            var c = '#0F' + i.toString( 16 );
+            $('#scale').append('<div style="position: absolute; bottom: 20px; height: 20px; width: ' + width + 'px; left: ' + left + 'px; background-color: ' + c + '">');
+            left += width;
+        };
+        // Now turn up the red:
+        for (var i = 0; i < 16; i++) {
+            var c = '#' + i.toString( 16 ) + 'F0';
+            $('#scale').append('<div style="position: absolute; bottom: 20px; height: 20px; width: ' + width + 'px; left: ' + left + 'px; background-color: ' + c + '">');
+            left += width;
+        };
+        // And finally, turn down the green:
+        for (var i = 15; i >= 0; i--) {
+            var c = '#F' + i.toString( 16 ) + '0';
+            $('#scale').append('<div style="position: absolute; bottom: 20px; height: 20px; width: ' + width + 'px; left: ' + left + 'px; background-color: ' + c + '">');
+            left += width;
+        };
     });
     </script>
+
+    <div id="scale"></div>
+    <div id="legend">
+        <div class="early">10m early</div>
+        <div class="late">10m late</div>
+    </div>
+
 </body>
 </html>
