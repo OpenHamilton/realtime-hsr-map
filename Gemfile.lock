@@ -53,6 +53,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   beefcake
+  i18n
   sinatra
   sinatra-activerecord
   sinatra-contrib
