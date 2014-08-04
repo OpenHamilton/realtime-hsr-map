@@ -33,15 +33,22 @@ end
 get '/buses' do
 	vehicle_positions = get_vehicle_positions
 	trip_updates      = get_trip_updates
+	delays            = get_delays( trip_updates )
 	bus_locations = []
 
 	vehicle_positions.entity.each do |entity|
 		route = Route.where( route_id: entity.vehicle.trip.route_id ).first
 
 		trip_id = entity.vehicle.trip.trip_id
-		delay   = get_delay( trip_id, trip_updates )
+		delay   = delays[ trip_id ]
+		# delay   = 0 if delay.nil?
 		color   = get_color( delay )
-		puts delay
+		
+		if delay.nil?
+			delay = '[unknown]'
+		else
+			delay = "#{( delay / 60.0 ).to_i} minutes"
+		end
 
 		bus_locations << {
 			:bus_number => entity.vehicle.vehicle.label,
@@ -51,7 +58,7 @@ get '/buses' do
 			:route_id   => route.route_id,
 			:route_name => route.route_short_name + ' ' + route.route_long_name,
 			:color      => color,
-			:delay      => ( delay / 60.0 ).to_i,				# Seconds to minutes
+			:delay      => delay,
 			:bearing    => entity.vehicle.position.bearing+90
 		}
 	end
@@ -69,6 +76,33 @@ def get_trip_updates
 	url = 'http://opendata.hamilton.ca/GTFS-RT/GTFS_TripUpdates.pb'
 	data = FeedMessage.decode( open(url).read )
 	return data
+end
+
+def get_delays( trip_updates )
+	delays = Hash.new
+	trip_updates.entity.each_with_index do |entity, i|
+		next if entity.nil? or entity.trip_update.nil? or entity.trip_update.trip.nil? or entity.trip_update.stop_time_update.nil?
+		trip_id = entity.trip_update.trip.trip_id
+
+		min_update_index = 0
+		min_update       = 1_000_000
+		entity.trip_update.stop_time_update.each_with_index do |stop_time_update, j|
+			next if ( stop_time_update.departure.nil? )
+
+			time_remaining = Time.at( stop_time_update.departure.time ) - Time.now
+			if time_remaining > 0 and time_remaining < min_update
+				min_update = time_remaining
+				min_update_index = j
+			end
+		end
+
+		if entity.trip_update.stop_time_update[min_update_index].departure.nil?
+			delays[ trip_id ] = nil
+		else
+			delays[ trip_id ] = entity.trip_update.stop_time_update[min_update_index].departure.delay
+		end
+	end
+	return delays
 end
 
 def get_delay( trip_id, trip_updates )
@@ -94,9 +128,11 @@ def get_delay( trip_id, trip_updates )
 			return entity.trip_update.stop_time_update[min_update_index].departure.delay
 		end
 	end
+	return 0
 end
 
 def get_color( delay )
+	return '000' if delay.nil?
 	# Blue  - #0000FF - 10 minutes early
 	#         #00FFFF
 	# Green - #00FF00 - On time

@@ -55,7 +55,7 @@
                             arrow.bindPopup( '<strong>Bus Number:</strong> ' + bus.bus_number + 
                                 '<br/><strong>Route:</strong> ' + bus.route_name +
                                 '<br/><strong>Speed:</strong> ' + bus.speed + ' km/h' +
-                                '<br/><strong>Delay:</strong> ' + bus.delay + ' minutes'
+                                '<br/><strong>Delay:</strong> ' + bus.delay
                             );
 
                             busLocations.push( {
@@ -82,6 +82,10 @@
                     };
 
                     setTimeout( updateBusLocations, 5000 );
+                },
+                failure: function( e ) {
+                    console.log('FAILURE', e);
+                    updateBusLocations();
                 }
             });
         };
