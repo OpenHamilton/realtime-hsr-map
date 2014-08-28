@@ -25,8 +25,18 @@ class Route < ActiveRecord::Base
     # route_short_name      The route number (eg, 05)
 end
 
+# Global variable because I'm an asshole and can't be arsed to learn how caching works in Sinatra right now.
+@@routes = Hash.new
+
 get '/' do
   @mapboxId = settings.mapboxId
+
+  # Create route cache.
+  routes = Route.all
+  routes.each do |r|
+  	@@routes[ r.route_id ] = r
+  end
+
   erb :index
 end
 
@@ -37,11 +47,10 @@ get '/buses' do
 	bus_locations = []
 
 	vehicle_positions.entity.each do |entity|
-		route = Route.where( route_id: entity.vehicle.trip.route_id ).first
+		route = @@routes[ entity.vehicle.trip.route_id ]
 
 		trip_id = entity.vehicle.trip.trip_id
 		delay   = delays[ trip_id ]
-		# delay   = 0 if delay.nil?
 		color   = get_color( delay )
 		
 		if delay.nil?
