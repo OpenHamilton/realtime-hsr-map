@@ -64,8 +64,8 @@ get '/buses' do
 			:lat        => entity.vehicle.position.latitude,
 			:lng        => entity.vehicle.position.longitude,
 			:speed      => entity.vehicle.position.speed * 3.6,	# m/s to km/h
-			:route_id   => route.route_id,
-			:route_name => route.route_short_name + ' ' + route.route_long_name,
+			:route_id   => entity.vehicle.trip.route_id,
+			:route_name => route.nil? ? 'Unknown' : route.route_short_name + ' ' + route.route_long_name,
 			:color      => color,
 			:delay      => delay,
 			:bearing    => entity.vehicle.position.bearing+90
